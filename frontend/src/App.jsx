@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 // Đổi link này thành http://localhost:3000 nếu test dưới máy tính
-const API_URL = 'https://quanlynhansunhom04-rkq9.onrender.com'
+const API_URL = 'https://quanlynhansunhom4.onrender.com'
 
 function App() {
   const [employees, setEmployees] = useState([])

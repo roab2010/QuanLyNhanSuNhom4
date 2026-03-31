@@ -1,186 +1,289 @@
-import { useState, useEffect } from 'react'
-
-// Đổi link này thành http://localhost:3000 nếu test dưới máy tính
-const API_URL = 'https://quanlynhansunhom4.onrender.com'
+import { useState, useEffect } from 'react';
+const API_URL = 'https://quanlynhansunhom4.onrender.com'; // Địa chỉ Backend đã được deploy lên Render
 
 function App() {
-  const [employees, setEmployees] = useState([])
-  const [departments, setDepartments] = useState([]) // State mới lưu danh sách phòng ban
-  
-  const [maNV, setMaNV] = useState('')
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [gender, setGender] = useState('Nam')
-  const [deptId, setDeptId] = useState('') // Lưu ID của phòng ban thay vì tên
-  const [position, setPosition] = useState('')
-  const [salary, setSalary] = useState('')
-  const [status, setStatus] = useState('Đang làm việc')
-  
-  const [editId, setEditId] = useState(null)
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [authForm, setAuthForm] = useState({ username: '', password: '', fullname: '' });
 
-  // Gọi 2 API cùng lúc khi tải trang
+  const [employees, setEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const [empForm, setEmpForm] = useState({
+    ma_nv: '', full_name: '', phone: '', gender: 'Nam', dept_id: '', position: '', base_salary: '', status: 'Đang làm việc'
+  });
+  const [editId, setEditId] = useState(null);
+
   useEffect(() => {
-    fetchEmployees()
-    fetchDepartments()
-  }, [])
+    if (currentUser) {
+      fetchDepartments();
+      fetchEmployees();
+    }
+  }, [currentUser, searchQuery]);
 
   const fetchDepartments = () => {
     fetch(`${API_URL}/api/departments`)
       .then(res => res.json())
       .then(data => {
-        setDepartments(data)
-        if (data.length > 0) setDeptId(data[0].id) // Mặc định chọn phòng ban đầu tiên
-      })
-  }
+        setDepartments(data);
+        if (data.length > 0 && !empForm.dept_id) setEmpForm(f => ({ ...f, dept_id: data[0].id }));
+      });
+  };
 
   const fetchEmployees = () => {
-    fetch(`${API_URL}/api/employees`)
+    // encodeURIComponent giúp giữ nguyên vẹn dấu tiếng Việt khi gửi lên Backend
+    fetch(`${API_URL}/api/employees?search=${encodeURIComponent(searchQuery)}`)
       .then(res => res.json())
-      .then(data => setEmployees(data))
-  }
+      .then(data => setEmployees(data));
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    
-    const employeeData = { 
-      ma_nv: maNV, 
-      full_name: name, 
-      phone: phone, 
-      gender: gender,
-      dept_id: deptId, // Gửi ID phòng ban đi
-      position: position,
-      base_salary: salary || 0, 
-      status: status
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    const endpoint = isLoginMode ? '/api/login' : '/api/register';
+    try {
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(authForm)
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.error || 'Có lỗi xảy ra!');
+      if (isLoginMode) setCurrentUser(data.user);
+      else {
+        alert('Đăng ký thành công! Vui lòng đăng nhập.');
+        setIsLoginMode(true);
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setAuthForm({ username: '', password: '', fullname: '' });
+  };
+
+  const handleEmpSubmit = async (e) => {
+    e.preventDefault();
+    const method = editId ? 'PUT' : 'POST';
+    const url = editId ? `${API_URL}/api/employees/${editId}` : `${API_URL}/api/employees`;
+
+    try {
+      const res = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...empForm, base_salary: empForm.base_salary || 0 })
+      });
+      const data = await res.json();
+      
+      // BẮT LỖI TỪ BACKEND Ở ĐÂY (Vd: Trùng mã NV)
+      if (!res.ok) {
+        return alert(data.error || 'Có lỗi xảy ra, vui lòng kiểm tra lại!');
+      }
+
+      setEditId(null);
+      setEmpForm({ ma_nv: '', full_name: '', phone: '', gender: 'Nam', dept_id: departments[0]?.id || '', position: '', base_salary: '', status: 'Đang làm việc' });
+      fetchEmployees();
+      alert(editId ? 'Cập nhật thành công!' : 'Thêm nhân viên mới thành công!');
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi kết nối đến máy chủ!');
     }
-
-    const method = editId ? 'PUT' : 'POST'
-    const url = editId ? `${API_URL}/api/employees/${editId}` : `${API_URL}/api/employees`
-
-    await fetch(url, {
-      method: method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(employeeData)
-    })
-    
-    setEditId(null); setMaNV(''); setName(''); setPhone(''); setGender('Nam'); setPosition(''); setSalary(''); setStatus('Đang làm việc');
-    fetchEmployees()
-  }
+  };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Xác nhận xóa nhân viên này?')) {
-      await fetch(`${API_URL}/api/employees/${id}`, { method: 'DELETE' })
-      fetchEmployees()
+    if (window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) {
+      await fetch(`${API_URL}/api/employees/${id}`, { method: 'DELETE' });
+      fetchEmployees();
     }
-  }
+  };
 
   const handleEdit = (emp) => {
-    setMaNV(emp.ma_nv || '') 
-    setName(emp.full_name || '')
-    setPhone(emp.phone || '')
-    setGender(emp.gender || 'Nam')
-    setDeptId(emp.dept_id || (departments.length > 0 ? departments[0].id : '')) // Gán lại ID phòng ban
-    setPosition(emp.position || '')
-    setSalary(emp.base_salary || '')
-    setStatus(emp.status || 'Đang làm việc')
-    setEditId(emp.id)
-  }
+    setEmpForm({
+      ma_nv: emp.ma_nv, full_name: emp.full_name, phone: emp.phone, gender: emp.gender,
+      dept_id: emp.dept_id, position: emp.position, base_salary: emp.base_salary, status: emp.status
+    });
+    setEditId(emp.id);
+  };
 
-  const formatCurrency = (amount) => {
-    if (!amount) return '0 ₫'
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
-  }
+  const formatMoney = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
 
-  return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '1100px', margin: '0 auto', color: '#333' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#2c3e50' }}>Hệ Thống Quản Lý Nhân Sự</h1>
-      
-      <div style={{ backgroundColor: '#f8f9fa', padding: '25px', marginBottom: '30px', borderRadius: '8px', border: '1px solid #ddd' }}>
-        <h3 style={{ marginTop: 0, marginBottom: '20px', borderBottom: '2px solid #3498db', paddingBottom: '10px', display: 'inline-block' }}>
-          {editId ? '✏️ Sửa thông tin nhân viên' : '➕ Thêm nhân viên mới'}
-        </h3>
-        
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
-          
-          <input type="text" placeholder="Mã NV (*)" value={maNV} onChange={(e) => setMaNV(e.target.value)} disabled={editId ? true : false} required style={inputStyle} />
-          <input type="text" placeholder="Họ và Tên (*)" value={name} onChange={(e) => setName(e.target.value)} required style={inputStyle} />
-          <input type="text" placeholder="Số điện thoại" value={phone} onChange={(e) => setPhone(e.target.value)} style={inputStyle} />
-          
-          <select value={gender} onChange={(e) => setGender(e.target.value)} style={inputStyle}>
-            <option value="Nam">Nam</option>
-            <option value="Nữ">Nữ</option>
-            <option value="Khác">Khác</option>
-          </select>
-
-          {/* Menu Dropdown cho Phòng Ban */}
-          <select value={deptId} onChange={(e) => setDeptId(e.target.value)} required style={inputStyle}>
-            {departments.map(dept => (
-              <option key={dept.id} value={dept.id}>{dept.dept_name}</option>
-            ))}
-          </select>
-
-          <input type="text" placeholder="Chức vụ (*)" value={position} onChange={(e) => setPosition(e.target.value)} required style={inputStyle} />
-          <input type="number" placeholder="Lương cơ bản (VNĐ)" value={salary} onChange={(e) => setSalary(e.target.value)} style={inputStyle} />
-
-          <select value={status} onChange={(e) => setStatus(e.target.value)} style={inputStyle}>
-            <option value="Đang làm việc">Đang làm việc</option>
-            <option value="Thử việc">Thử việc</option>
-            <option value="Nghỉ việc">Nghỉ việc</option>
-          </select>
-          
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <button type="submit" style={{ padding: '10px 25px', backgroundColor: editId ? '#f39c12' : '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-              {editId ? 'Lưu cập nhật' : 'Thêm nhân viên'}
-            </button>
-            {editId && (
-              <button type="button" onClick={() => { setEditId(null); setMaNV(''); setName(''); setPhone(''); setGender('Nam'); setPosition(''); setSalary(''); setStatus('Đang làm việc'); }} style={{ padding: '10px 25px', marginLeft: '10px', backgroundColor: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                Hủy
-              </button>
-            )}
+  // Giao diện Đăng Nhập (Giữ nguyên phong cách Pastel)
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-sky-50 p-4 font-sans text-gray-800">
+        <div className="bg-white p-10 rounded-[30px] shadow-2xl shadow-sky-200/50 w-full max-w-md border border-white">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">HRM <span className="text-blue-500">FG04</span></h1>
+            <p className="text-slate-500 text-sm">{isLoginMode ? 'Đăng nhập vào không gian làm việc' : 'Tạo tài khoản quản trị mới'}</p>
           </div>
-        </form>
+          <form onSubmit={handleAuthSubmit} className="space-y-5">
+            {!isLoginMode && <input type="text" placeholder="Họ và tên" required className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none" value={authForm.fullname} onChange={e => setAuthForm({...authForm, fullname: e.target.value})} />}
+            <input type="text" placeholder="Tên đăng nhập" required className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none" value={authForm.username} onChange={e => setAuthForm({...authForm, username: e.target.value})} />
+            <input type="password" placeholder="Mật khẩu" required className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none" value={authForm.password} onChange={e => setAuthForm({...authForm, password: e.target.value})} />
+            <button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/30 transition-all">{isLoginMode ? 'Đăng Nhập' : 'Đăng Ký'}</button>
+          </form>
+          <div className="mt-8 text-center text-sm text-slate-500">
+            {isLoginMode ? 'Chưa có tài khoản? ' : 'Đã có tài khoản? '}
+            <button onClick={() => setIsLoginMode(!isLoginMode)} className="text-blue-600 font-semibold hover:underline">{isLoginMode ? 'Đăng ký' : 'Đăng nhập'}</button>
+          </div>
+        </div>
       </div>
+    );
+  }
 
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#34495e', color: 'white', textAlign: 'left' }}>
-              <th style={thStyle}>Mã NV</th>
-              <th style={thStyle}>Họ Tên</th>
-              <th style={thStyle}>SĐT</th>
-              <th style={thStyle}>Giới Tính</th>
-              <th style={thStyle}>Phòng Ban</th>
-              <th style={thStyle}>Chức Vụ</th>
-              <th style={thStyle}>Lương Cơ Bản</th>
-              <th style={thStyle}>Trạng Thái</th>
-              <th style={thStyle}>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {employees.map(emp => (
-              <tr key={emp.id} style={{ borderBottom: '1px solid #ddd' }}>
-                <td style={tdStyle}><strong>{emp.ma_nv}</strong></td>
-                <td style={tdStyle}>{emp.full_name}</td>
-                <td style={tdStyle}>{emp.phone}</td>
-                <td style={tdStyle}>{emp.gender}</td>
-                <td style={tdStyle}>{emp.department}</td> {/* Lấy tên phòng từ JOIN */}
-                <td style={tdStyle}>{emp.position}</td>
-                <td style={{...tdStyle, color: '#e67e22', fontWeight: 'bold'}}>{formatCurrency(emp.base_salary)}</td>
-                <td style={{...tdStyle, color: emp.status === 'Nghỉ việc' ? 'red' : 'green'}}>{emp.status}</td>
-                <td style={tdStyle}>
-                  <button onClick={() => handleEdit(emp)} style={{ marginRight: '5px', padding: '5px 10px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Sửa</button>
-                  <button onClick={() => handleDelete(emp.id)} style={{ padding: '5px 10px', backgroundColor: '#e74c3c', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Xóa</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+  // Giao diện Dashboard (Có Sidebar)
+  return (
+    <div className="min-h-screen bg-sky-50 font-sans text-slate-800 flex flex-col md:flex-row">
+      
+      {/* SIDEBAR BÊN TRÁI */}
+      <aside className="w-full md:w-64 bg-white border-r border-slate-100 flex flex-col md:h-screen md:sticky top-0 shadow-lg shadow-sky-100/50">
+        <div className="p-6 text-center border-b border-slate-50 hidden md:block">
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">HRM <span className="text-blue-500">FG04</span></h1>
+        </div>
+        <nav className="flex-1 p-4 flex md:flex-col gap-2 overflow-x-auto md:overflow-visible">
+          <a href="#" className="flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-2xl font-semibold whitespace-nowrap">
+            👥 Quản lý Nhân sự
+          </a>
+          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-2xl font-medium transition-colors whitespace-nowrap">
+            🏢 Phòng ban
+          </a>
+          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-2xl font-medium transition-colors whitespace-nowrap">
+            🕒 Chấm công
+          </a>
+          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-2xl font-medium transition-colors whitespace-nowrap">
+            📝 Xin nghỉ phép
+          </a>
+          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-2xl font-medium transition-colors whitespace-nowrap">
+            💰 Bảng lương
+          </a>
+          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-2xl font-medium transition-colors whitespace-nowrap">
+            📊 Thống kê
+          </a>
+        </nav>
+        <div className="p-4 border-t border-slate-50 hidden md:block">
+           <div className="bg-slate-50 p-4 rounded-2xl flex flex-col items-center">
+              <div className="w-10 h-10 bg-blue-200 text-blue-700 rounded-full flex items-center justify-center font-bold mb-2">
+                {currentUser.username.charAt(0).toUpperCase()}
+              </div>
+              <p className="text-sm font-semibold text-slate-700">{currentUser.fullname || currentUser.username}</p>
+              <button onClick={handleLogout} className="mt-2 text-xs text-red-500 hover:underline font-medium">Đăng xuất</button>
+           </div>
+        </div>
+      </aside>
+
+      {/* NỘI DUNG CHÍNH (MAIN CONTENT) */}
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+          <div>
+            <h2 className="text-2xl font-extrabold text-slate-900">Danh sách Nhân viên</h2>
+            <p className="text-slate-500 text-sm mt-1">Quản lý hồ sơ và thông tin liên lạc</p>
+          </div>
+          <div className="relative w-full md:w-80">
+            <input type="text" placeholder="🔍 Tìm tên hoặc mã NV..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
+                   className="w-full pl-10 pr-4 py-3 bg-white border-none rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-100 outline-none transition-all" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Form Thêm/Sửa */}
+          <div className="lg:col-span-1">
+            <div className="bg-white p-6 rounded-[30px] shadow-xl shadow-sky-100/50 border border-white sticky top-8">
+              <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <span className="bg-blue-100 text-blue-600 p-2 rounded-xl">{editId ? '✏️' : '+'}</span>
+                {editId ? 'Cập nhật hồ sơ' : 'Thêm nhân sự mới'}
+              </h3>
+              
+              <form onSubmit={handleEmpSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <input type="text" placeholder="Mã NV *" value={empForm.ma_nv} onChange={e => setEmpForm({...empForm, ma_nv: e.target.value.toUpperCase()})} required className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none uppercase placeholder:normal-case" />
+                  <select value={empForm.gender} onChange={e => setEmpForm({...empForm, gender: e.target.value})} required className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none">
+                    <option value="Nam">Nam</option><option value="Nữ">Nữ</option>
+                  </select>
+                </div>
+                
+                <input type="text" placeholder="Họ và Tên *" value={empForm.full_name} onChange={e => setEmpForm({...empForm, full_name: e.target.value})} required className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none" />
+                <input type="text" placeholder="Số điện thoại *" value={empForm.phone} onChange={e => setEmpForm({...empForm, phone: e.target.value.replace(/[^0-9]/g, '')})} required maxLength="11"className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none"/>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <select value={empForm.dept_id} onChange={e => setEmpForm({...empForm, dept_id: e.target.value})} required className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none">
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.dept_name}</option>)}
+                  </select>
+                  <input type="text" placeholder="Chức vụ *" value={empForm.position} onChange={e => setEmpForm({...empForm, position: e.target.value})} required className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none" />
+                </div>
+
+                <input type="number" placeholder="Lương cơ bản (VNĐ) *" value={empForm.base_salary} onChange={e => setEmpForm({...empForm, base_salary: e.target.value})} required className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none" />
+                <select value={empForm.status} onChange={e => setEmpForm({...empForm, status: e.target.value})} required className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none">
+                  <option value="Đang làm việc">Đang làm việc</option>
+                  <option value="Thử việc">Thử việc</option>
+                  <option value="Nghỉ việc">Nghỉ việc</option>
+                </select>
+
+                <div className="pt-2 flex gap-3">
+                  <button type="submit" className={`flex-1 text-white font-bold py-4 rounded-2xl shadow-lg transition-all ${editId ? 'bg-orange-400 hover:bg-orange-500 shadow-orange-500/30' : 'bg-blue-500 hover:bg-blue-600 shadow-blue-500/30'}`}>
+                    {editId ? 'Lưu Thay Đổi' : 'Xác Nhận Thêm'}
+                  </button>
+                  {editId && (
+                    <button type="button" onClick={() => { setEditId(null); setEmpForm({ ma_nv: '', full_name: '', phone: '', gender: 'Nam', dept_id: departments[0]?.id || '', position: '', base_salary: '', status: 'Đang làm việc' }); }} className="px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-2xl transition-all">
+                      Hủy
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Bảng dữ liệu */}
+          <div className="lg:col-span-2">
+            <div className="bg-white p-2 md:p-6 rounded-[30px] shadow-xl shadow-sky-100/50 border border-white overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="text-slate-400 border-b border-slate-100 uppercase text-xs tracking-wider">
+                      <th className="p-4 font-semibold">Mã NV</th>
+                      <th className="p-4 font-semibold">Nhân viên</th>
+                      <th className="p-4 font-semibold">Giới tính</th>
+                      <th className="p-4 font-semibold">Liên hệ</th>
+                      <th className="p-4 font-semibold">Công việc</th>
+                      <th className="p-4 font-semibold text-right">Lương</th>
+                      <th className="p-4 font-semibold text-center">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {employees.length === 0 ? (
+                      <tr><td colSpan="7" className="p-8 text-center text-slate-400">Không tìm thấy dữ liệu.</td></tr>
+                    ) : employees.map(emp => (
+                      <tr key={emp.id} className="hover:bg-sky-50/50 transition-colors group">
+                        <td className="p-4 text-sm font-bold text-blue-500">{emp.ma_nv}</td>
+                        <td className="p-4 font-bold text-slate-800">{emp.full_name}</td>
+                        <td className="p-4 text-sm text-slate-600">{emp.gender}</td>
+                        <td className="p-4 text-sm text-slate-600">{emp.phone}</td>
+                        <td className="p-4">
+                          <div className="font-medium text-slate-800 text-sm">{emp.position}</div>
+                          <div className="text-xs text-slate-500 bg-slate-100 inline-block px-2 py-1 rounded-lg mt-1">{emp.department}</div>
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="font-bold text-slate-800">{formatMoney(emp.base_salary)}</div>
+                          <div className={`text-xs font-semibold mt-1 ${emp.status === 'Đang làm việc' ? 'text-emerald-500' : emp.status === 'Thử việc' ? 'text-orange-400' : 'text-red-400'}`}>• {emp.status}</div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="flex justify-center gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleEdit(emp)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-all" title="Sửa">✏️</button>
+                            <button onClick={() => handleDelete(emp.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Xóa">🗑️</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
     </div>
-  )
+  );
 }
 
-const inputStyle = { padding: '10px', borderRadius: '4px', border: '1px solid #ccc', width: '100%', boxSizing: 'border-box', fontSize: '14px' }
-const thStyle = { padding: '12px 15px', border: '1px solid #ddd', whiteSpace: 'nowrap' }
-const tdStyle = { padding: '10px 15px', border: '1px solid #ddd', verticalAlign: 'middle' }
-
-export default App
+export default App;

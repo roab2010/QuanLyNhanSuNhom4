@@ -16,12 +16,33 @@ const db = mysql.createConnection({
     ssl: { rejectUnauthorized: true }
 });
 
-// Lời chào trang chủ
-app.get('/', (req, res) => {
-    res.send('<h2>🚀 Backend đang chạy (Mô hình 2 bảng: Departments & Employees)</h2>');
+// ================= API XÁC THỰC (ĐĂNG NHẬP/ĐĂNG KÝ) =================
+
+// Đăng ký
+app.post('/api/register', (req, res) => {
+    const { username, password, fullname } = req.body;
+    db.query('INSERT INTO users (username, password, fullname) VALUES (?, ?, ?)', 
+        [username, password, fullname], (err, result) => {
+        if (err) {
+            if(err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Tên đăng nhập đã tồn tại!' });
+            return res.status(500).json(err);
+        }
+        res.json({ message: 'Đăng ký thành công!' });
+    });
 });
 
-// 1. API Lấy danh sách Phòng Ban (Để hiển thị lên Dropdown)
+// Đăng nhập
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    db.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (err, results) => {
+        if (err) return res.status(500).json(err);
+        if (results.length === 0) return res.status(401).json({ error: 'Sai tài khoản hoặc mật khẩu!' });
+        res.json({ message: 'Đăng nhập thành công', user: results[0] });
+    });
+});
+
+// ================= API NHÂN SỰ CÓ TÌM KIẾM =================
+
 app.get('/api/departments', (req, res) => {
     db.query('SELECT * FROM departments', (err, results) => {
         if (err) return res.status(500).json(err);
@@ -29,48 +50,57 @@ app.get('/api/departments', (req, res) => {
     });
 });
 
-// 2. API Lấy danh sách Nhân viên (Dùng JOIN để lấy tên phòng ban)
+// Danh sách NV + Tìm kiếm 
 app.get('/api/employees', (req, res) => {
+    const search = req.query.search || '';
     const sql = `
         SELECT e.*, d.dept_name AS department 
         FROM employees e 
         LEFT JOIN departments d ON e.dept_id = d.id 
+        WHERE e.full_name COLLATE utf8mb4_general_ci LIKE ? 
+           OR e.ma_nv COLLATE utf8mb4_general_ci LIKE ?
         ORDER BY e.id DESC
     `;
-    db.query(sql, (err, results) => {
+    const searchValue = `%${search}%`;
+    db.query(sql, [searchValue, searchValue], (err, results) => {
         if (err) return res.status(500).json(err);
         res.json(results);
     });
 });
 
-// 3. API Thêm nhân viên (Lưu dept_id thay vì tên phòng)
+
 app.post('/api/employees', (req, res) => {
     const { ma_nv, full_name, phone, gender, dept_id, position, base_salary, status } = req.body;
-    const sql = 'INSERT INTO employees (ma_nv, full_name, phone, gender, dept_id, position, base_salary, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-    db.query(sql, [ma_nv, full_name, phone, gender, dept_id, position, base_salary, status], (err, result) => {
-        if (err) return res.status(500).json(err);
+    db.query('INSERT INTO employees (ma_nv, full_name, phone, gender, dept_id, position, base_salary, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+    [ma_nv, full_name, phone, gender, dept_id, position, base_salary, status], (err) => {
+        if (err) {
+            // Lỗi ER_DUP_ENTRY là do bị trùng mã có chữ UNIQUE trong database
+            if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Mã nhân viên này đã tồn tại trong hệ thống!' });
+            return res.status(500).json({ error: 'Lỗi máy chủ!' });
+        }
         res.json({ message: 'Thêm thành công' });
     });
 });
 
-// 4. API Sửa nhân viên
+
 app.put('/api/employees/:id', (req, res) => {
     const { id } = req.params;
-    const { full_name, phone, gender, dept_id, position, base_salary, status } = req.body;
-    const sql = 'UPDATE employees SET full_name=?, phone=?, gender=?, dept_id=?, position=?, base_salary=?, status=? WHERE id=?';
-    db.query(sql, [full_name, phone, gender, dept_id, position, base_salary, status, id], (err, result) => {
-        if (err) return res.status(500).json(err);
+    const { ma_nv, full_name, phone, gender, dept_id, position, base_salary, status } = req.body;
+    db.query('UPDATE employees SET ma_nv=?, full_name=?, phone=?, gender=?, dept_id=?, position=?, base_salary=?, status=? WHERE id=?', 
+    [ma_nv, full_name, phone, gender, dept_id, position, base_salary, status, id], (err) => {
+        if (err) {
+            if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Mã nhân viên này đã tồn tại trong hệ thống!' });
+            return res.status(500).json({ error: 'Lỗi máy chủ!' });
+        }
         res.json({ message: 'Sửa thành công' });
     });
 });
 
-// 5. API Xóa nhân viên
 app.delete('/api/employees/:id', (req, res) => {
-    const { id } = req.params;
-    db.query('DELETE FROM employees WHERE id = ?', [id], (err, result) => {
+    db.query('DELETE FROM employees WHERE id = ?', [req.params.id], (err) => {
         if (err) return res.status(500).json(err);
         res.json({ message: 'Xóa thành công' });
     });
 });
 
-app.listen(3000, () => console.log('Backend đang chạy ở port 3000'));
+app.listen(3000, () => console.log('Backend chạy port 3000'));

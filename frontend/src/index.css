@@ -1,8 +1,9 @@
+/* Nap 3 lop style co ban cua Tailwind. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Dat mau nen tong the cho toan bo trang. */
 body {
-    background-color: #f0f8ff;
-    /* Màu xanh nền cực nhạt */
+  background-color: #f0f8ff;
 }

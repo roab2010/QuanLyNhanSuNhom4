@@ -1,7 +1,11 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+// defineConfig giup editor goi y va kiem tra cau hinh Vite tot hon.
+import { defineConfig } from 'vite';
 
-// https://vite.dev/config/
+// Plugin React de Vite hieu JSX va ho tro HMR.
+import react from '@vitejs/plugin-react';
+
+// Cau hinh Vite cho du an frontend.
 export default defineConfig({
+  // Kich hoat plugin React.
   plugins: [react()],
-})
+});

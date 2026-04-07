@@ -1,172 +1,386 @@
-# HUONG DAN DU AN QUAN LY NHAN SU NHOM 4
+# HƯỚNG DẪN DỰ ÁN QUẢN LÝ NHÂN SỰ NHÓM 4
 
-## 1. Tong quan cau truc
+## 1. Tổng quan dự án
 
-Du an duoc chia thanh 2 phan chinh:
+Đây là một hệ thống quản lý nhân sự cơ bản, được xây dựng theo mô hình tách riêng:
 
-- `backend/`: API Node.js + Express ket noi den co so du lieu TiDB Cloud.
-- `frontend/`: giao dien React + Vite + Tailwind de quan ly nhan su.
+- `frontend/`: giao diện người dùng
+- `backend/`: API xử lý dữ liệu và kết nối cơ sở dữ liệu
 
-Nhung file quan trong nhat:
+Mục tiêu của dự án là hỗ trợ các chức năng chính:
 
-- `backend/server.js`: diem vao cua backend, khai bao ket noi database va toan bo API.
-- `backend/package.json`: dinh nghia thu vien va script chay backend.
-- `frontend/src/main.jsx`: diem vao cua frontend, render `App` vao `#root`.
-- `frontend/src/App.jsx`: file giao dien va xu ly chinh cua project.
-- `frontend/src/index.css`: nap Tailwind va style nen tong the.
-- `frontend/index.html`: trang HTML goc de Vite mount ung dung.
-- `frontend/.env.example`: mau bien moi truong de frontend goi backend local.
+- Đăng ký tài khoản
+- Đăng nhập hệ thống
+- Hiển thị danh sách nhân viên
+- Tìm kiếm nhân viên theo tên hoặc mã
+- Thêm nhân viên mới
+- Sửa thông tin nhân viên
+- Xóa nhân viên
 
-## 2. Luong chay tong the
+Về mặt công nghệ:
 
-### 2.1 Luc khoi dong frontend
+- Frontend dùng `React`, `Vite`, `Tailwind CSS`
+- Backend dùng `Node.js`, `Express`, `mysql2`
+- Cơ sở dữ liệu đang kết nối tới `TiDB Cloud`
 
-1. Trinh duyet mo `frontend/index.html`.
-2. File nay nap `frontend/src/main.jsx`.
-3. `main.jsx` render component `App`.
-4. `App.jsx` kiem tra `currentUser`.
-5. Neu `currentUser = null`, man hinh dang nhap/dang ky se hien ra.
-6. Neu `currentUser` co gia tri, dashboard quan ly nhan su se hien ra.
+---
 
-### 2.2 Luc dang nhap / dang ky
+## 2. Cấu trúc thư mục chính
 
-1. Nguoi dung nhap thong tin vao form.
-2. `handleAuthSubmit()` duoc goi khi bam nut submit.
-3. Frontend goi:
-   - `POST /api/login` neu dang o che do dang nhap
-   - `POST /api/register` neu dang o che do dang ky
-4. Backend trong `server.js` nhan request, truy van bang `users`.
-5. Neu thanh cong:
-   - dang nhap: backend tra user, frontend luu vao `currentUser`
-   - dang ky: frontend thong bao thanh cong va quay ve che do dang nhap
+### Thư mục `backend/`
 
-### 2.3 Sau khi dang nhap
+- `server.js`: file trung tâm của backend, chứa toàn bộ API
+- `package.json`: khai báo thư viện và script chạy backend
 
-Khi `currentUser` thay doi:
+### Thư mục `frontend/`
 
-1. `useEffect` thu nhat goi `fetchDepartments()`.
-2. `fetchDepartments()` goi `GET /api/departments`.
-3. Danh sach phong ban duoc luu vao state `departments`.
-4. Neu form nhan vien chua co phong ban mac dinh thi lay phong ban dau tien.
+- `src/main.jsx`: điểm bắt đầu của React app
+- `src/App.jsx`: file giao diện và logic chính
+- `src/index.css`: nạp Tailwind CSS và CSS nền
+- `index.html`: file HTML gốc để mount React
+- `vite.config.js`: cấu hình Vite
+- `tailwind.config.js`: cấu hình Tailwind
+- `.env.example`: file mẫu để cấu hình URL backend
 
-Dong thoi:
+### Các file tài liệu
 
-1. `useEffect` thu hai goi `fetchEmployees()`.
-2. `fetchEmployees()` goi `GET /api/employees?search=...`.
-3. Backend join bang `employees` voi `departments`.
-4. Frontend luu ket qua vao state `employees`.
-5. Bang nhan vien tren giao dien duoc render lai.
+- `HUONG_DAN_DU_AN.md`: tài liệu tổng quan dự án
+- `GIAI_THICH_TUNG_HAM.md`: tài liệu giải thích chi tiết từng hàm
+- `THUYET_TRINH_6_NGUOI.md`: tài liệu chia phần thuyết trình cho 6 người
 
-### 2.4 Tim kiem nhan vien
+---
 
-1. Nguoi dung nhap vao o tim kiem.
-2. `searchQuery` thay doi.
-3. `useEffect` theo doi `searchQuery` duoc chay lai.
-4. Frontend goi lai `fetchEmployees()`.
-5. Backend loc theo `full_name` hoac `ma_nv`.
+## 3. Luồng chạy tổng thể của hệ thống
 
-### 2.5 Them nhan vien moi
+Đây là phần quan trọng nhất khi học và khi thuyết trình.
 
-1. Nguoi dung nhap form ben trai.
-2. `handleEmpSubmit()` duoc goi.
-3. Neu `editId = null`, frontend goi `POST /api/employees`.
-4. Backend chen du lieu vao bang `employees`.
-5. Neu thanh cong, frontend:
-   - reset form
-   - goi lai `fetchEmployees()`
-   - hien alert thong bao
+### Bước 1: Người dùng mở frontend
 
-### 2.6 Sua nhan vien
+Khi người dùng truy cập vào trang web:
 
-1. Nguoi dung bam nut `Edit` o dong nhan vien.
-2. `handleEdit(emp)` dua du lieu len form.
-3. `editId` duoc gan bang `id` cua nhan vien.
-4. Khi submit, frontend goi `PUT /api/employees/:id`.
-5. Backend cap nhat ban ghi tuong ung.
-6. Frontend tai lai danh sach va dua form ve che do them moi.
+1. Trình duyệt tải file `frontend/index.html`
+2. File này nạp `frontend/src/main.jsx`
+3. `main.jsx` render component `App`
+4. `App.jsx` kiểm tra người dùng đã đăng nhập chưa
 
-### 2.7 Xoa nhan vien
+Nếu chưa đăng nhập:
 
-1. Nguoi dung bam nut `Delete`.
-2. `handleDelete(id)` hien hop xac nhan.
-3. Neu dong y, frontend goi `DELETE /api/employees/:id`.
-4. Backend xoa ban ghi trong database.
-5. Frontend tai lai danh sach nhan vien.
+- hiển thị màn hình đăng nhập / đăng ký
 
-## 3. Cac API backend
+Nếu đã đăng nhập:
 
-- `POST /api/register`: tao tai khoan moi.
-- `POST /api/login`: dang nhap.
-- `GET /api/departments`: lay danh sach phong ban.
-- `GET /api/employees?search=...`: lay va tim kiem nhan vien.
-- `POST /api/employees`: them nhan vien.
-- `PUT /api/employees/:id`: cap nhat nhan vien.
-- `DELETE /api/employees/:id`: xoa nhan vien.
+- hiển thị dashboard quản lý nhân sự
 
-## 4. Cac state quan trong trong frontend
+### Bước 2: Người dùng đăng nhập hoặc đăng ký
 
-- `currentUser`: xac dinh da dang nhap hay chua.
-- `isLoginMode`: chuyen doi giua form dang nhap va dang ky.
-- `authForm`: du lieu cua form xac thuc.
-- `employees`: danh sach nhan vien hien tren bang.
-- `departments`: danh sach phong ban cho o select.
-- `searchQuery`: tu khoa tim kiem.
-- `empForm`: du lieu form them/sua nhan vien.
-- `editId`: neu co gia tri thi dang sua, neu `null` thi dang them moi.
+Người dùng nhập:
 
-## 5. Cach chay project
+- tên đăng nhập
+- mật khẩu
+- họ tên nếu là đăng ký
 
-### 5.1 Chay backend
+Khi bấm submit:
 
-Mo terminal trong thu muc `backend` va chay:
+1. Frontend gọi hàm `handleAuthSubmit()`
+2. Hàm này gửi request lên backend
+3. Backend kiểm tra dữ liệu trong bảng `users`
+4. Nếu thành công:
+   - frontend lưu `currentUser`
+   - giao diện chuyển sang dashboard
+
+### Bước 3: Dashboard tải dữ liệu
+
+Sau khi đăng nhập thành công:
+
+1. Frontend gọi API lấy danh sách phòng ban
+2. Frontend gọi API lấy danh sách nhân viên
+3. Dữ liệu trả về được lưu vào state
+4. Bảng nhân viên được render ra màn hình
+
+### Bước 4: Người dùng thao tác trên nhân viên
+
+Người dùng có thể:
+
+- tìm kiếm
+- thêm mới
+- sửa
+- xóa
+
+Mỗi thao tác trên giao diện sẽ gọi API tương ứng bên backend.
+
+Backend xử lý xong sẽ trả dữ liệu về.
+Frontend sau đó tải lại danh sách nhân viên để bảng luôn đồng bộ.
+
+---
+
+## 4. Luồng chạy chi tiết giữa frontend và backend
+
+## 4.1 Luồng đăng nhập
+
+### Ở frontend
+
+1. Người dùng nhập tài khoản và mật khẩu
+2. Dữ liệu được lưu vào `authForm`
+3. Khi submit, `handleAuthSubmit()` chạy
+4. Frontend gọi:
+
+```text
+POST /api/login
+```
+
+### Ở backend
+
+1. Route `/api/login` nhận dữ liệu từ `req.body`
+2. Kiểm tra `username` và `password` trong bảng `users`
+3. Nếu đúng:
+   - trả về thông tin user
+4. Nếu sai:
+   - trả về lỗi `401`
+
+### Kết quả
+
+Frontend nhận được user và gọi:
+
+```text
+setCurrentUser(data.user)
+```
+
+Ngay sau đó giao diện chuyển sang dashboard.
+
+## 4.2 Luồng lấy danh sách phòng ban
+
+### Frontend
+
+Sau khi đăng nhập:
+
+1. `useEffect` theo dõi `currentUser`
+2. Nếu có user, frontend gọi:
+
+```text
+GET /api/departments
+```
+
+### Backend
+
+1. Route `/api/departments` chạy câu lệnh:
+
+```sql
+SELECT * FROM departments
+```
+
+2. Trả về mảng phòng ban
+
+### Kết quả
+
+Frontend lưu vào state `departments`.
+Danh sách này được đưa vào ô chọn phòng ban trong form nhân viên.
+
+## 4.3 Luồng lấy danh sách nhân viên
+
+### Frontend
+
+1. `useEffect` theo dõi `currentUser` và `searchQuery`
+2. Mỗi lần đăng nhập hoặc đổi từ khóa tìm kiếm, frontend gọi:
+
+```text
+GET /api/employees?search=...
+```
+
+### Backend
+
+1. Nhận từ khóa tìm kiếm từ `req.query.search`
+2. Truy vấn bảng `employees`
+3. `JOIN` với bảng `departments`
+4. Trả về danh sách nhân viên
+
+### Kết quả
+
+Frontend gọi:
+
+```text
+setEmployees(data)
+```
+
+Sau đó bảng nhân viên được cập nhật ngay trên giao diện.
+
+## 4.4 Luồng thêm nhân viên
+
+### Frontend
+
+1. Người dùng nhập thông tin vào form
+2. Dữ liệu lưu trong `empForm`
+3. Khi bấm submit, `handleEmpSubmit()` chạy
+4. Vì `editId = null`, frontend dùng:
+
+```text
+POST /api/employees
+```
+
+### Backend
+
+1. Nhận toàn bộ thông tin nhân viên từ `req.body`
+2. Thực hiện `INSERT` vào bảng `employees`
+3. Nếu trùng mã nhân viên:
+   - trả lỗi
+
+### Kết quả
+
+Frontend:
+
+- reset form
+- gọi lại `fetchEmployees()`
+- hiển thị danh sách mới
+
+## 4.5 Luồng sửa nhân viên
+
+### Frontend
+
+1. Người dùng bấm nút sửa
+2. Hàm `handleEdit(emp)` đưa dữ liệu lên form
+3. `editId` được gán bằng `id` nhân viên
+4. Khi submit lại form:
+   - frontend gọi:
+
+```text
+PUT /api/employees/:id
+```
+
+### Backend
+
+1. Lấy `id` từ `req.params`
+2. Lấy dữ liệu mới từ `req.body`
+3. Chạy câu lệnh `UPDATE`
+
+### Kết quả
+
+Frontend:
+
+- đưa form về chế độ thêm mới
+- tải lại danh sách nhân viên
+
+## 4.6 Luồng xóa nhân viên
+
+### Frontend
+
+1. Người dùng bấm nút xóa
+2. Hệ thống hiện hộp xác nhận
+3. Nếu đồng ý, frontend gọi:
+
+```text
+DELETE /api/employees/:id
+```
+
+### Backend
+
+1. Nhận `id` từ URL
+2. Chạy câu lệnh `DELETE`
+
+### Kết quả
+
+Frontend gọi lại `fetchEmployees()` để cập nhật bảng.
+
+---
+
+## 5. Các API của backend
+
+- `POST /api/register`: tạo tài khoản mới
+- `POST /api/login`: đăng nhập
+- `GET /api/departments`: lấy danh sách phòng ban
+- `GET /api/employees?search=...`: lấy và tìm kiếm danh sách nhân viên
+- `POST /api/employees`: thêm nhân viên
+- `PUT /api/employees/:id`: cập nhật nhân viên
+- `DELETE /api/employees/:id`: xóa nhân viên
+
+---
+
+## 6. Các state quan trọng trong frontend
+
+- `currentUser`: biết người dùng đã đăng nhập hay chưa
+- `isLoginMode`: biết đang ở đăng nhập hay đăng ký
+- `authForm`: lưu dữ liệu form xác thực
+- `employees`: lưu danh sách nhân viên
+- `departments`: lưu danh sách phòng ban
+- `searchQuery`: lưu từ khóa tìm kiếm
+- `empForm`: lưu dữ liệu form nhân viên
+- `editId`: phân biệt thêm mới và sửa
+
+---
+
+## 7. Cách chạy dự án
+
+## 7.1 Chạy backend
+
+Mở PowerShell trong thư mục [backend](D:/hung/QuanLyNhanSuNhom4/backend) và chạy:
 
 ```powershell
 npm install
 npm start
 ```
 
-Mac dinh backend se chay o `http://localhost:3000`.
+Backend mặc định chạy tại:
 
-### 5.2 Chay frontend
+```text
+http://localhost:3000
+```
 
-Mo terminal khac trong thu muc `frontend` va chay:
+## 7.2 Chạy frontend
+
+Mở PowerShell khác trong thư mục [frontend](D:/hung/QuanLyNhanSuNhom4/frontend) và chạy:
 
 ```powershell
 npm install
 npm run dev
 ```
 
-Neu muon frontend goi backend local thay vi backend da deploy, tao file `.env` trong thu muc `frontend/` voi noi dung:
+Frontend thường chạy tại:
+
+```text
+http://localhost:5173
+```
+
+## 7.3 Cấu hình frontend gọi backend local
+
+Tạo file `.env` trong thư mục `frontend/` với nội dung:
 
 ```env
 VITE_API_URL=http://localhost:3000
 ```
 
-Da co san file mau `frontend/.env.example` de tham khao.
+Có thể tham khảo file [frontend/.env.example](D:/hung/QuanLyNhanSuNhom4/frontend/.env.example)
 
-Sau do mo URL ma Vite hien ra, thuong la `http://localhost:5173`.
+---
 
-## 6. Thu tu doc code de de hieu nhat
+## 8. Gợi ý demo khi thuyết trình
 
-Neu ban muon hoc luong chay cua project, nen doc theo thu tu nay:
+Nếu cần demo trực tiếp, nên làm theo đúng luồng này:
 
-1. `frontend/index.html`
-2. `frontend/src/main.jsx`
-3. `frontend/src/App.jsx`
-4. `backend/server.js`
-5. `frontend/tailwind.config.js`
-6. `frontend/vite.config.js`
+1. Mở giao diện đăng nhập
+2. Chuyển sang đăng ký
+3. Đăng ký hoặc đăng nhập
+4. Vào dashboard
+5. Tìm kiếm một nhân viên
+6. Thêm một nhân viên mới
+7. Sửa nhân viên đó
+8. Xóa nhân viên đó
 
-## 7. Luu y ky thuat
+Đây là luồng demo tốt nhất vì nó bao phủ:
 
-- Frontend hien dang luu trang thai dang nhap trong RAM, nen tai lai trang se mat phien dang nhap.
-- Backend dang so sanh mat khau truc tiep trong database, chua bam mat khau.
-- Thong tin ket noi database hien dang nam trong ma nguon backend. Ve sau nen dua ra bien moi truong de an toan hon.
-- Nhieu style dang viet truc tiep bang class Tailwind trong JSX, nen file `App.jsx` la noi can doc ky nhat.
+- xác thực
+- tải dữ liệu
+- tìm kiếm
+- CRUD nhân viên
 
-## 8. Ban da duoc minh bo sung gi
+---
 
-- Them comment truc tiep vao cac file code chinh va file cau hinh.
-- Them script `npm start` cho backend.
-- Them file mau bien moi truong `frontend/.env.example`.
-- Tach ro hon luong tai phong ban va luong tai nhan vien trong `App.jsx`.
+## 9. Các điểm kỹ thuật cần lưu ý
+
+- Frontend hiện tại lưu trạng thái đăng nhập trong state, chưa dùng `localStorage`
+- Mật khẩu hiện đang kiểm tra trực tiếp trong database, chưa mã hóa
+- Backend đang đặt thông tin kết nối database trực tiếp trong code
+- Toàn bộ logic frontend đang tập trung nhiều ở `App.jsx`
+
+---
+
+## 10. Kết luận
+
+Dự án này phù hợp để học mô hình frontend/backend, cách gọi API và CRUD cơ bản. Khi thuyết trình, nên trình bày theo luồng người dùng thực tế thay vì chỉ đọc từng file code.

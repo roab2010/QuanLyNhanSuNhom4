@@ -1,699 +1,100 @@
-# GIAI THICH TUNG HAM TRONG PROJECT
+# GIẢI THÍCH TỪNG HÀM TRONG PROJECT
 
-Tai lieu nay di sau hon file `HUONG_DAN_DU_AN.md`.
-Muc tieu cua file nay la giai thich tung ham trong project:
+Tài liệu này đi sâu hơn file `HUONG_DAN_DU_AN.md`.
 
-- Ham nam o file nao
-- Ham duoc goi khi nao
-- Ham nhan du lieu gi
-- Ham xu ly gi ben trong
-- Ham thay doi state nao
-- Ham anh huong den giao dien hay API nhu the nao
+Mục tiêu:
+
+- Giải thích từng hàm chính trong project
+- Nói rõ hàm nằm ở đâu
+- Hàm được gọi khi nào
+- Hàm nhận dữ liệu gì
+- Hàm xử lý gì
+- Hàm làm thay đổi state hoặc dữ liệu như thế nào
+- Hàm đó ảnh hưởng tới giao diện hoặc backend ra sao
 
 ---
 
 ## 1. FRONTEND
 
-Frontend nam chu yeu trong file `frontend/src/main.jsx` va `frontend/src/App.jsx`.
+Frontend nằm chủ yếu trong:
 
-### 1.1 File `frontend/src/main.jsx`
-
-Day la diem vao cua frontend.
-
-#### `createRoot(document.getElementById('root')).render(...)`
-
-Vai tro:
-- Day la lenh khoi dong React app.
-- No tim the `<div id="root"></div>` trong `index.html`.
-- Sau do render component `App` vao trong the do.
-
-No nhan gi:
-- `document.getElementById('root')`: phan tu HTML goc.
-- `<App />`: component chinh cua project.
-
-No lam gi:
-1. Tao root React moi.
-2. Boc `App` trong `StrictMode`.
-3. Render ra man hinh.
-
-Tai sao can:
-- Neu khong co lenh nay, frontend se khong hien gi ca.
-
-#### `<StrictMode>`
-
-Vai tro:
-- Giup React canh bao mot so van de trong luc phat trien.
-
-No lam gi:
-- Khong anh huong truc tiep giao dien cho nguoi dung cuoi.
-- Chu yeu giup lap trinh vien phat hien code co nguy co van de.
+- `frontend/src/main.jsx`
+- `frontend/src/App.jsx`
 
 ---
 
-### 1.2 File `frontend/src/App.jsx`
+## 2. FILE `frontend/src/main.jsx`
 
-Day la file quan trong nhat cua frontend.
-Gan nhu toan bo luong giao dien va thao tac nghiep vu deu o day.
+### `createRoot(document.getElementById('root')).render(...)`
+
+### Vai trò
+
+Đây là lệnh dùng để render toàn bộ React app vào HTML.
+
+### Nó làm gì
+
+1. Tìm phần tử có id là `root` trong `index.html`
+2. Tạo một React root
+3. Render component `App`
+
+### Vì sao cần
+
+Nếu không có đoạn này thì ứng dụng React sẽ không xuất hiện trên trình duyệt.
+
+### `<StrictMode>`
+
+`StrictMode` được dùng để hỗ trợ quá trình phát triển:
+
+- cảnh báo một số vấn đề tiềm ẩn
+- giúp phát hiện code chưa tối ưu
 
 ---
 
-## 2. CAC HANG SO VA HAM NGOAI COMPONENT
+## 3. FILE `frontend/src/App.jsx`
+
+Đây là file trung tâm của frontend.
+File này xử lý gần như toàn bộ:
+
+- đăng nhập
+- đăng ký
+- dashboard
+- danh sách nhân viên
+- tìm kiếm
+- thêm
+- sửa
+- xóa
+
+---
+
+## 4. HẰNG SỐ VÀ HÀM NGOÀI COMPONENT
 
 ### `API_URL`
 
-Vi tri:
-- Nam o dau file `App.jsx`
+### Vai trò
 
-Vai tro:
-- Xac dinh frontend se goi backend nao.
+Xác định địa chỉ backend mà frontend sẽ gọi tới.
 
-Gia tri:
-- Uu tien `import.meta.env.VITE_API_URL`
-- Neu khong co thi dung backend deploy san:
-  `https://quanlynhansunhom4.onrender.com`
+### Cách hoạt động
 
-Tac dung:
-- Moi lenh `fetch(...)` deu ghep URL nay vao truoc endpoint.
-
-Vi du:
-- `/api/login`
-- `/api/employees`
-- `/api/departments`
-
-Neu thay doi:
-- Frontend se goi sang backend khac.
+- Nếu có biến môi trường `VITE_API_URL` thì dùng biến đó
+- Nếu không có thì dùng URL backend deploy sẵn
 
 ### `createEmptyEmpForm(defaultDeptId = '')`
 
-Loai:
-- Ham helper
+### Vai trò
 
-Vai tro:
-- Tao ra object mac dinh cho form nhan vien.
-- Duoc dung khi:
-  - khoi tao state ban dau
-  - reset form sau khi them thanh cong
-  - reset form sau khi huy sua
+Tạo object mặc định cho form nhân viên.
 
-Tham so:
-- `defaultDeptId`: id phong ban mac dinh
+### Dùng khi nào
 
-Tra ve:
-- Mot object co cau truc:
-  - `ma_nv`
-  - `full_name`
-  - `phone`
-  - `gender`
-  - `dept_id`
-  - `position`
-  - `base_salary`
-  - `status`
+- khởi tạo `empForm`
+- reset form sau khi thêm
+- reset form khi hủy sửa
 
-Tai sao tach thanh ham rieng:
-- Tranh lap lai object nhieu lan.
-- De sua cau truc form o mot noi duy nhat.
+### Đầu ra
 
----
+Object gồm:
 
-## 3. COMPONENT CHINH `App()`
-
-`App()` la component lon nhat cua project.
-Nhiem vu cua no:
-
-- Quan ly dang nhap / dang ky
-- Quan ly state giao dien
-- Goi API backend
-- Render giao dien dang nhap
-- Render dashboard nhan su
-- Xu ly them / sua / xoa / tim kiem nhan vien
-
----
-
-## 4. CAC STATE TRONG `App()`
-
-### `currentUser`
-
-Khai bao:
-- `const [currentUser, setCurrentUser] = useState(null);`
-
-Vai tro:
-- Xac dinh nguoi dung da dang nhap chua.
-
-Gia tri:
-- `null`: chua dang nhap
-- object user: da dang nhap
-
-Anh huong:
-- Neu `currentUser` la `null` thi hien form dang nhap.
-- Neu `currentUser` co gia tri thi hien dashboard.
-
-### `isLoginMode`
-
-Vai tro:
-- Chuyen doi giua:
-  - dang nhap
-  - dang ky
-
-Gia tri:
-- `true`: dang nhap
-- `false`: dang ky
-
-Anh huong:
-- Thay doi endpoint duoc goi trong `handleAuthSubmit`
-- Thay doi text tren giao dien
-- Thay doi co hien truong `fullname` hay khong
-
-### `authForm`
-
-Vai tro:
-- Luu du lieu nguoi dung dang nhap vao form xac thuc.
-
-Cau truc:
-- `username`
-- `password`
-- `fullname`
-
-Luu y:
-- `fullname` chi co y nghia khi dang ky.
-
-### `employees`
-
-Vai tro:
-- Luu danh sach nhan vien hien trong bang.
-
-Cap nhat khi nao:
-- Sau khi dang nhap
-- Khi tim kiem
-- Sau khi them
-- Sau khi sua
-- Sau khi xoa
-
-### `departments`
-
-Vai tro:
-- Luu danh sach phong ban.
-
-Dung de:
-- Do du lieu vao o `select` trong form nhan vien.
-
-### `searchQuery`
-
-Vai tro:
-- Luu chuoi tim kiem nguoi dung nhap.
-
-Anh huong:
-- Moi khi no thay doi, `useEffect` se tai lai danh sach nhan vien.
-
-### `empForm`
-
-Vai tro:
-- Luu du lieu hien tai cua form them/sua nhan vien.
-
-Dung cho:
-- Them moi nhan vien
-- Sua nhan vien
-
-### `editId`
-
-Vai tro:
-- Biet form dang o che do nao:
-  - `null`: them moi
-  - co gia tri: dang sua nhan vien co `id` tuong ung
-
-Anh huong:
-- Chon `POST` hay `PUT`
-- Doi text tren nut submit
-- Hien/An nut `Huy`
-
----
-
-## 5. CAC `useEffect` TRONG `App()`
-
-### `useEffect(..., [currentUser])`
-
-Vai tro:
-- Tai danh sach phong ban sau khi dang nhap.
-
-No duoc goi khi nao:
-- Khi `currentUser` thay doi.
-
-Luong chay:
-1. Kiem tra neu `currentUser` rong thi `return`.
-2. Goi `fetch(${API_URL}/api/departments)`.
-3. Backend tra ve danh sach phong ban.
-4. `setDepartments(data)` de luu vao state.
-5. Neu form nhan vien chua co `dept_id`, gan phong ban dau tien vao.
-
-Tai sao can:
-- Form them nhan vien can danh sach phong ban de nguoi dung chon.
-
-### `useEffect(..., [currentUser, searchQuery])`
-
-Vai tro:
-- Tai danh sach nhan vien.
-
-No duoc goi khi nao:
-- Sau khi dang nhap
-- Moi khi tu khoa tim kiem thay doi
-
-Luong chay:
-1. Kiem tra `currentUser`.
-2. Goi API:
-   `GET /api/employees?search=...`
-3. Backend tra danh sach nhan vien.
-4. `setEmployees(data)` cap nhat bang du lieu.
-
-Tai sao can:
-- Dam bao bang nhan vien luon dong bo voi tu khoa tim kiem.
-
----
-
-## 6. CAC HAM XU LY TRONG `App()`
-
-### `fetchEmployees()`
-
-Loai:
-- Ham helper ben trong component
-
-Vai tro:
-- Tai lai danh sach nhan vien.
-
-No duoc dung o dau:
-- Sau khi them nhan vien
-- Sau khi sua nhan vien
-- Sau khi xoa nhan vien
-
-Tai sao khong goi truc tiep `useEffect`:
-- `useEffect` chi tu chay khi dependency doi.
-- Sau thao tac CRUD, minh can mot ham chu dong goi lai API.
-
-Luong chay:
-1. Lay `searchQuery` hien tai.
-2. Goi API `/api/employees?search=...`
-3. Nhan ket qua JSON.
-4. `setEmployees(data)`
-
-### `handleAuthSubmit(event)`
-
-Loai:
-- Ham xu ly submit form xac thuc
-
-Vai tro:
-- Dung chung cho:
-  - dang nhap
-  - dang ky
-
-Tham so:
-- `event`: su kien submit form
-
-Luong chay:
-1. Goi `event.preventDefault()` de ngan reload trang.
-2. Xac dinh endpoint:
-   - dang nhap -> `/api/login`
-   - dang ky -> `/api/register`
-3. Goi `fetch(...)` voi method `POST`.
-4. Gui `authForm` len backend duoi dang JSON.
-5. Cho backend tra ket qua.
-6. Neu loi:
-   - hien `alert(...)`
-7. Neu thanh cong va dang nhap:
-   - `setCurrentUser(data.user)`
-8. Neu thanh cong va dang ky:
-   - hien thong bao
-   - `setIsLoginMode(true)` de chuyen ve form dang nhap
-
-State bi anh huong:
-- `currentUser`
-- `isLoginMode`
-
-Anh huong giao dien:
-- Dang nhap thanh cong -> tu man hinh login chuyen sang dashboard
-- Dang ky thanh cong -> o lai man hinh xac thuc nhung doi ve mode dang nhap
-
-### `handleLogout()`
-
-Vai tro:
-- Dang xuat nguoi dung hien tai.
-
-Luong chay:
-1. `setCurrentUser(null)`
-2. Reset `authForm`
-
-Anh huong:
-- Giao dien quay lai man hinh dang nhap.
-
-Luu y:
-- Project hien tai khong co token hay localStorage.
-- Vi vay dang xuat chi la reset state tren frontend.
-
-### `handleEmpSubmit(event)`
-
-Loai:
-- Ham xu ly submit form nhan vien
-
-Vai tro:
-- Them moi hoac cap nhat nhan vien.
-
-Tham so:
-- `event`: su kien submit form
-
-Luong chay tong quat:
-1. Ngan form reload trang.
-2. Kiem tra `editId`.
-3. Neu `editId` co gia tri:
-   - method = `PUT`
-   - URL = `/api/employees/:id`
-4. Neu `editId` rong:
-   - method = `POST`
-   - URL = `/api/employees`
-5. Gui `empForm` len backend.
-6. Neu `base_salary` rong thi thay bang `0`.
-7. Doc ket qua tra ve.
-8. Neu backend bao loi:
-   - hien alert
-9. Neu thanh cong:
-   - `setEditId(null)`
-   - reset `empForm`
-   - goi `fetchEmployees()`
-   - alert thong bao thanh cong
-
-State bi anh huong:
-- `editId`
-- `empForm`
-- `employees` thong qua `fetchEmployees`
-
-Day la ham trung tam cua chuc nang CRUD.
-
-### `handleDelete(id)`
-
-Vai tro:
-- Xoa nhan vien theo `id`.
-
-Tham so:
-- `id`: id cua nhan vien can xoa
-
-Luong chay:
-1. Hien `window.confirm(...)`
-2. Neu nguoi dung khong dong y -> dung
-3. Neu dong y -> goi `DELETE /api/employees/:id`
-4. Sau khi xoa xong -> `fetchEmployees()`
-
-Anh huong:
-- Bang nhan vien duoc tai lai va dong vua xoa bien mat.
-
-### `handleEdit(emp)`
-
-Vai tro:
-- Dua du lieu cua nhan vien can sua len form.
-
-Tham so:
-- `emp`: object nhan vien duoc chon tu bang
-
-Luong chay:
-1. `setEmpForm(...)` bang du lieu cua nhan vien
-2. `setEditId(emp.id)`
-
-Anh huong:
-- Form ben trai duoc do day du lieu cu.
-- Nut submit doi thanh "Luu Thay Doi".
-- Nut `Huy` hien ra.
-
-### `formatMoney(amount)`
-
-Vai tro:
-- Hien luong theo dinh dang tien te Viet Nam.
-
-Tham so:
-- `amount`: so tien can hien thi
-
-Tra ve:
-- Chuoi da dinh dang, vi du:
-  - `15000000` -> `15.000.000 VND` tuy theo trinh duyet
-
-No khong thay doi state.
-No chi dung de hien thi dep hon trong giao dien.
-
----
-
-## 7. CAC HAM NGAM TRONG JSX
-
-Ngoai cac ham named o tren, trong JSX con co nhieu ham ngan duoc viet truc tiep.
-
-### `onChange={(event) => setAuthForm(...)}`
-
-Vai tro:
-- Cap nhat state moi khi nguoi dung go vao input.
-
-Co o:
-- username
-- password
-- fullname
-
-### `onChange={(event) => setEmpForm(...)}`
-
-Vai tro:
-- Cap nhat du lieu form nhan vien ngay khi nguoi dung nhap.
-
-Vi du:
-- ma nhan vien -> viet hoa
-- phone -> loai bo ky tu khong phai so
-- status -> cap nhat gia tri option
-
-### `onClick={() => setIsLoginMode(!isLoginMode)}`
-
-Vai tro:
-- Chuyen doi qua lai giua form dang nhap va dang ky.
-
-### `onClick={() => handleEdit(emp)}`
-
-Vai tro:
-- Goi ham sua cho dung dong nhan vien duoc bam.
-
-### `onClick={() => handleDelete(emp.id)}`
-
-Vai tro:
-- Goi ham xoa cho dung nhan vien duoc bam.
-
----
-
-## 8. LOGIC RENDER CUA `App()`
-
-### Khoi `if (!currentUser) { ... }`
-
-Vai tro:
-- Render giao dien dang nhap/dang ky.
-
-Y nghia:
-- Day la render co dieu kien.
-- Neu chua dang nhap thi khong cho vao dashboard.
-
-Ben trong co:
-- tieu de
-- form xac thuc
-- nut chuyen che do login/register
-
-### Khoi `return (...)` cuoi file
-
-Vai tro:
-- Render dashboard sau khi da dang nhap.
-
-Ben trong gom:
-- sidebar
-- thong tin user
-- o tim kiem
-- form them/sua
-- bang nhan vien
-
----
-
-## 9. BACKEND - FILE `backend/server.js`
-
-Backend dung Express va mysql2.
-
-Vai tro tong:
-- Nhan request tu frontend
-- Truy van database
-- Tra JSON cho frontend
-
----
-
-## 10. CAC PHAN KHOI TAO BACKEND
-
-### `express = require('express')`
-
-Vai tro:
-- Nap thu vien Express.
-
-### `mysql = require('mysql2')`
-
-Vai tro:
-- Nap thu vien ket noi database MySQL/TiDB.
-
-### `cors = require('cors')`
-
-Vai tro:
-- Cho phep frontend goi API khac domain/port.
-
-### `const app = express()`
-
-Vai tro:
-- Tao doi tuong server Express.
-
-Tat ca route API se gan vao `app`.
-
-### `app.use(cors())`
-
-Vai tro:
-- Bat CORS cho backend.
-
-Neu khong co:
-- Frontend co the bi chan khi goi API tu browser.
-
-### `app.use(express.json())`
-
-Vai tro:
-- Cho phep backend doc `req.body` dang JSON.
-
-Neu khong co:
-- `req.body` se khong co du lieu tu frontend gui len.
-
-### `const PORT = process.env.PORT || 3000`
-
-Vai tro:
-- Xac dinh cong chay backend.
-
-Uu tien:
-- bien moi truong `PORT`
-- neu khong co thi dung `3000`
-
-### `const db = mysql.createConnection({...})`
-
-Vai tro:
-- Tao ket noi den database.
-
-Thong tin gom:
-- host
-- port
-- user
-- password
-- database
-- ssl
-
-No khong phai route.
-No la nen tang de tat ca API truy van database.
-
----
-
-## 11. CAC API HAM BEN BACKEND
-
-### `app.post('/api/register', (req, res) => { ... })`
-
-Loai:
-- Route dang ky
-
-Vai tro:
-- Tao tai khoan moi trong bang `users`.
-
-Du lieu nhan:
-- `req.body.username`
-- `req.body.password`
-- `req.body.fullname`
-
-Luong chay:
-1. Tach `username`, `password`, `fullname` tu `req.body`
-2. Chay cau lenh SQL `INSERT INTO users ...`
-3. Neu loi trung username:
-   - tra HTTP 400
-4. Neu loi khac:
-   - tra HTTP 500
-5. Neu thanh cong:
-   - tra JSON message
-
-Frontend nao goi ham nay:
-- `handleAuthSubmit()` khi `isLoginMode = false`
-
-### `app.post('/api/login', (req, res) => { ... })`
-
-Loai:
-- Route dang nhap
-
-Vai tro:
-- Kiem tra tai khoan va mat khau.
-
-Du lieu nhan:
-- `username`
-- `password`
-
-Luong chay:
-1. Lay `username`, `password` tu body
-2. Truy van:
-   `SELECT * FROM users WHERE username = ? AND password = ?`
-3. Neu loi truy van -> HTTP 500
-4. Neu khong tim thay user -> HTTP 401
-5. Neu thanh cong -> tra ve `user`
-
-Frontend nao goi:
-- `handleAuthSubmit()` khi `isLoginMode = true`
-
-Luu y:
-- Mat khau hien tai dang so sanh truc tiep, chua ma hoa.
-
-### `app.get('/api/departments', (req, res) => { ... })`
-
-Loai:
-- Route lay phong ban
-
-Vai tro:
-- Lay toan bo danh sach phong ban.
-
-Luong chay:
-1. Chay `SELECT * FROM departments`
-2. Neu loi -> HTTP 500
-3. Neu thanh cong -> tra mang phong ban
-
-Frontend nao goi:
-- `useEffect([currentUser])`
-
-Muc dich:
-- Do du lieu vao select phong ban trong form nhan vien.
-
-### `app.get('/api/employees', (req, res) => { ... })`
-
-Loai:
-- Route lay nhan vien
-
-Vai tro:
-- Lay danh sach nhan vien
-- Ho tro tim kiem theo ten hoac ma nhan vien
-- Join them ten phong ban
-
-Du lieu nhan:
-- `req.query.search`
-
-Luong chay:
-1. Lay `search` tu query string
-2. Neu rong thi dung chuoi rong
-3. Tao cau SQL join `employees` va `departments`
-4. Dung `LIKE` de tim kiem
-5. Sap xep `ORDER BY e.id DESC`
-6. Tra ve ket qua JSON
-
-Frontend nao goi:
-- `useEffect([currentUser, searchQuery])`
-- `fetchEmployees()`
-
-Tai sao route nay quan trong:
-- Day la nguon du lieu chinh cho bang nhan vien.
-
-### `app.post('/api/employees', (req, res) => { ... })`
-
-Loai:
-- Route them nhan vien
-
-Vai tro:
-- Chen nhan vien moi vao bang `employees`.
-
-Du lieu nhan:
 - `ma_nv`
 - `full_name`
 - `phone`
@@ -703,194 +104,424 @@ Du lieu nhan:
 - `base_salary`
 - `status`
 
-Luong chay:
-1. Tach du lieu tu `req.body`
-2. Chay cau `INSERT`
-3. Neu trung `ma_nv` -> HTTP 400
-4. Neu loi khac -> HTTP 500
-5. Neu thanh cong -> tra message JSON
+---
 
-Frontend nao goi:
-- `handleEmpSubmit()` khi `editId = null`
+## 5. CÁC STATE TRONG COMPONENT `App()`
 
-### `app.put('/api/employees/:id', (req, res) => { ... })`
+### `currentUser`
 
-Loai:
-- Route cap nhat nhan vien
+Biết người dùng đã đăng nhập hay chưa.
 
-Vai tro:
-- Sua thong tin nhan vien da ton tai.
+### `isLoginMode`
 
-Du lieu nhan:
-- `req.params.id`
-- toan bo du lieu form trong `req.body`
+Biết đang hiển thị:
 
-Luong chay:
-1. Lay `id` tu URL
-2. Lay du lieu nhan vien moi tu body
-3. Chay cau `UPDATE ... WHERE id = ?`
-4. Neu trung `ma_nv` -> HTTP 400
-5. Neu loi khac -> HTTP 500
-6. Neu thanh cong -> tra message JSON
+- đăng nhập
+- hay đăng ký
 
-Frontend nao goi:
-- `handleEmpSubmit()` khi `editId` co gia tri
+### `authForm`
 
-### `app.delete('/api/employees/:id', (req, res) => { ... })`
+Lưu dữ liệu form xác thực.
 
-Loai:
-- Route xoa nhan vien
+### `employees`
 
-Vai tro:
-- Xoa nhan vien theo id.
+Lưu danh sách nhân viên.
 
-Du lieu nhan:
-- `req.params.id`
+### `departments`
 
-Luong chay:
-1. Chay `DELETE FROM employees WHERE id = ?`
-2. Neu loi -> HTTP 500
-3. Neu thanh cong -> tra message JSON
+Lưu danh sách phòng ban.
 
-Frontend nao goi:
-- `handleDelete(id)`
+### `searchQuery`
 
-### `app.listen(PORT, () => { ... })`
+Lưu chuỗi tìm kiếm.
 
-Vai tro:
-- Khoi dong backend.
+### `empForm`
 
-Neu khong co dong nay:
-- Server se khong lang nghe request.
+Lưu dữ liệu form thêm / sửa nhân viên.
 
-No duoc goi khi nao:
-- Khi chay lenh:
-  `npm start`
-  hoac
-  `node server.js`
+### `editId`
+
+Nếu `null` là thêm mới, nếu có giá trị là sửa.
 
 ---
 
-## 12. MOT THAO TAC SE DI QUA NHUNG HAM NAO
+## 6. CÁC `useEffect` TRONG `App()`
 
-### Truong hop 1: Dang nhap
+## `useEffect(..., [currentUser])`
 
-Luot chay:
-1. Nguoi dung nhap input
+### Vai trò
+
+Tự động tải danh sách phòng ban sau khi đăng nhập.
+
+### Luồng chạy
+
+1. Kiểm tra `currentUser`
+2. Nếu chưa đăng nhập thì dừng
+3. Nếu đã đăng nhập thì gọi:
+
+```text
+GET /api/departments
+```
+
+4. Lấy dữ liệu trả về
+5. Lưu vào `departments`
+6. Nếu form chưa có phòng ban mặc định thì gán phòng ban đầu tiên
+
+## `useEffect(..., [currentUser, searchQuery])`
+
+### Vai trò
+
+Tự động tải danh sách nhân viên.
+
+### Luồng chạy
+
+1. Kiểm tra `currentUser`
+2. Nếu đã đăng nhập thì gọi API:
+
+```text
+GET /api/employees?search=...
+```
+
+3. Dữ liệu trả về được lưu vào `employees`
+
+### Khi nào chạy
+
+- sau khi đăng nhập
+- khi người dùng thay đổi từ khóa tìm kiếm
+
+---
+
+## 7. CÁC HÀM XỬ LÝ TRONG FRONTEND
+
+## `fetchEmployees()`
+
+### Vai trò
+
+Tải lại danh sách nhân viên.
+
+### Dùng khi nào
+
+- sau khi thêm
+- sau khi sửa
+- sau khi xóa
+
+### Luồng chạy
+
+1. Lấy `searchQuery`
+2. Gọi `/api/employees`
+3. Nhận JSON
+4. Cập nhật `employees`
+
+## `handleAuthSubmit(event)`
+
+### Vai trò
+
+Xử lý submit form xác thực.
+
+### Luồng chạy
+
+1. Chặn reload trang
+2. Kiểm tra `isLoginMode`
+3. Nếu đăng nhập thì gọi `/api/login`
+4. Nếu đăng ký thì gọi `/api/register`
+5. Gửi `authForm` lên backend
+6. Nếu lỗi thì báo
+7. Nếu đăng nhập thành công thì cập nhật `currentUser`
+8. Nếu đăng ký thành công thì chuyển về đăng nhập
+
+### State bị ảnh hưởng
+
+- `currentUser`
+- `isLoginMode`
+
+## `handleLogout()`
+
+### Vai trò
+
+Đăng xuất người dùng hiện tại.
+
+### Luồng chạy
+
+1. `setCurrentUser(null)`
+2. reset `authForm`
+
+## `handleEmpSubmit(event)`
+
+### Vai trò
+
+Xử lý submit form nhân viên cho cả thêm mới và sửa.
+
+### Luồng chạy
+
+1. Chặn reload form
+2. Kiểm tra `editId`
+3. Nếu có `editId` thì dùng `PUT`
+4. Nếu không có `editId` thì dùng `POST`
+5. Gửi `empForm`
+6. Nếu thành công:
+   - reset form
+   - xóa `editId`
+   - gọi `fetchEmployees()`
+
+## `handleDelete(id)`
+
+### Vai trò
+
+Xóa một nhân viên theo `id`.
+
+### Luồng chạy
+
+1. Hỏi xác nhận
+2. Nếu đồng ý thì gọi `DELETE`
+3. Sau đó tải lại danh sách
+
+## `handleEdit(emp)`
+
+### Vai trò
+
+Đưa dữ liệu của một nhân viên từ bảng lên form để sửa.
+
+### Luồng chạy
+
+1. Đưa dữ liệu vào `empForm`
+2. Gán `editId = emp.id`
+
+## `formatMoney(amount)`
+
+### Vai trò
+
+Định dạng lương theo chuẩn tiền tệ Việt Nam.
+
+---
+
+## 8. LOGIC RENDER TRONG `App()`
+
+## Khối `if (!currentUser) { ... }`
+
+### Vai trò
+
+Hiển thị giao diện đăng nhập / đăng ký.
+
+## Khối `return (...)` cuối cùng
+
+### Vai trò
+
+Hiển thị dashboard quản lý nhân sự.
+
+### Bao gồm
+
+- sidebar
+- thông tin người dùng
+- ô tìm kiếm
+- form thêm sửa
+- bảng nhân viên
+
+---
+
+## 9. BACKEND - FILE `backend/server.js`
+
+Backend dùng:
+
+- `Express`
+- `mysql2`
+- `cors`
+
+---
+
+## 10. PHẦN KHỞI TẠO BACKEND
+
+### `const app = express()`
+
+Tạo ứng dụng Express.
+
+### `app.use(cors())`
+
+Cho phép frontend gọi API.
+
+### `app.use(express.json())`
+
+Cho phép đọc JSON từ `req.body`.
+
+### `const PORT = process.env.PORT || 3000`
+
+Xác định cổng chạy server.
+
+### `const db = mysql.createConnection(...)`
+
+Tạo kết nối tới TiDB Cloud.
+
+---
+
+## 11. CÁC ROUTE API TRONG BACKEND
+
+## `app.post('/api/register', ...)`
+
+### Vai trò
+
+Đăng ký tài khoản mới.
+
+### Luồng xử lý
+
+1. Lấy `username`, `password`, `fullname`
+2. Chạy `INSERT INTO users`
+3. Nếu trùng username thì trả lỗi
+4. Nếu thành công thì trả message
+
+## `app.post('/api/login', ...)`
+
+### Vai trò
+
+Kiểm tra tài khoản và mật khẩu khi đăng nhập.
+
+### Luồng xử lý
+
+1. Lấy dữ liệu từ body
+2. Truy vấn bảng `users`
+3. Nếu không có kết quả thì trả `401`
+4. Nếu thành công thì trả user
+
+## `app.get('/api/departments', ...)`
+
+### Vai trò
+
+Trả về danh sách phòng ban.
+
+### Luồng xử lý
+
+1. Chạy `SELECT * FROM departments`
+2. Trả JSON
+
+## `app.get('/api/employees', ...)`
+
+### Vai trò
+
+Lấy danh sách nhân viên và hỗ trợ tìm kiếm.
+
+### Luồng xử lý
+
+1. Lấy `search` từ query
+2. `JOIN` bảng `employees` với `departments`
+3. Dùng `LIKE` để tìm theo tên hoặc mã
+4. Trả kết quả
+
+## `app.post('/api/employees', ...)`
+
+### Vai trò
+
+Thêm nhân viên mới.
+
+### Luồng xử lý
+
+1. Lấy dữ liệu từ body
+2. Chạy `INSERT`
+3. Nếu trùng mã nhân viên thì trả lỗi
+4. Nếu thành công thì trả message
+
+## `app.put('/api/employees/:id', ...)`
+
+### Vai trò
+
+Cập nhật thông tin nhân viên theo `id`.
+
+### Luồng xử lý
+
+1. Lấy `id` từ URL
+2. Lấy dữ liệu mới từ body
+3. Chạy `UPDATE`
+4. Trả kết quả
+
+## `app.delete('/api/employees/:id', ...)`
+
+### Vai trò
+
+Xóa nhân viên theo `id`.
+
+### Luồng xử lý
+
+1. Lấy `id`
+2. Chạy `DELETE`
+3. Trả message thành công
+
+## `app.listen(PORT, ...)`
+
+### Vai trò
+
+Khởi động backend để lắng nghe request.
+
+---
+
+## 12. GIẢI THÍCH THEO LUỒNG DEMO THỰC TẾ
+
+## Demo 1: Đăng nhập
+
+### Luồng hàm
+
+1. Người dùng gõ input
 2. `setAuthForm(...)`
-3. Bam submit
-4. `handleAuthSubmit(event)`
-5. Frontend goi `POST /api/login`
-6. Backend chay route `app.post('/api/login', ...)`
-7. Backend tra user
-8. Frontend `setCurrentUser(data.user)`
-9. `useEffect([currentUser])` chay -> tai phong ban
-10. `useEffect([currentUser, searchQuery])` chay -> tai nhan vien
-11. Dashboard hien ra
+3. Submit form
+4. `handleAuthSubmit()`
+5. Backend chạy `/api/login`
+6. Trả user
+7. `setCurrentUser(...)`
+8. `useEffect` tải phòng ban
+9. `useEffect` tải danh sách nhân viên
 
-### Truong hop 2: Tim kiem nhan vien
+## Demo 2: Tìm kiếm nhân viên
 
-Luot chay:
-1. Nguoi dung go o tim kiem
+### Luồng hàm
+
+1. Gõ vào ô tìm kiếm
 2. `setSearchQuery(...)`
-3. `searchQuery` doi
-4. `useEffect([currentUser, searchQuery])` chay
-5. Frontend goi `GET /api/employees?search=...`
-6. Backend chay route `app.get('/api/employees', ...)`
-7. Backend tra danh sach da loc
-8. Frontend `setEmployees(data)`
-9. Bang cap nhat
+3. `useEffect` chạy lại
+4. Frontend gọi `/api/employees?search=...`
+5. Backend lọc dữ liệu
+6. Frontend cập nhật `employees`
 
-### Truong hop 3: Them nhan vien
+## Demo 3: Thêm nhân viên
 
-Luot chay:
-1. Nguoi dung nhap form
-2. Nhieu `onChange` cap nhat `empForm`
-3. Bam submit
-4. `handleEmpSubmit(event)`
-5. Vi `editId = null` nen goi `POST /api/employees`
-6. Backend chay route `app.post('/api/employees', ...)`
-7. Backend chen database
-8. Frontend reset form
-9. Frontend goi `fetchEmployees()`
-10. Bang hien du lieu moi
+### Luồng hàm
 
-### Truong hop 4: Sua nhan vien
+1. Nhập form
+2. `setEmpForm(...)`
+3. Submit
+4. `handleEmpSubmit()`
+5. Vì `editId = null` nên dùng `POST`
+6. Backend thêm bản ghi mới
+7. Frontend gọi `fetchEmployees()`
 
-Luot chay:
-1. Bam nut `Edit`
+## Demo 4: Sửa nhân viên
+
+### Luồng hàm
+
+1. Bấm nút sửa
 2. `handleEdit(emp)`
-3. `setEmpForm(...)`
-4. `setEditId(emp.id)`
-5. Form doi sang che do sua
-6. Bam submit
-7. `handleEmpSubmit(event)`
-8. Vi `editId` co gia tri nen goi `PUT /api/employees/:id`
-9. Backend chay route `app.put('/api/employees/:id', ...)`
-10. Backend cap nhat database
-11. Frontend reset ve che do them moi
-12. Frontend `fetchEmployees()`
+3. `editId` được gán
+4. Submit lại form
+5. `handleEmpSubmit()`
+6. Lúc này dùng `PUT`
+7. Backend cập nhật bản ghi
+8. Frontend tải lại bảng
 
-### Truong hop 5: Xoa nhan vien
+## Demo 5: Xóa nhân viên
 
-Luot chay:
-1. Bam nut `Delete`
+### Luồng hàm
+
+1. Bấm nút xóa
 2. `handleDelete(id)`
-3. Xac nhan popup
-4. Frontend goi `DELETE /api/employees/:id`
-5. Backend chay route `app.delete('/api/employees/:id', ...)`
-6. Backend xoa ban ghi
-7. Frontend goi `fetchEmployees()`
-8. Bang mat dong da xoa
+3. Xác nhận
+4. Gọi `DELETE`
+5. Backend xóa
+6. Frontend gọi `fetchEmployees()`
 
 ---
 
-## 13. NHUNG DIEM NEN NHIN KHI HOC CODE
+## 13. Kết luận
 
-Neu ban dang hoc project nay, hay doc theo thu tu sau:
+Nếu học project này, nên học theo:
 
-1. `frontend/index.html`
-2. `frontend/src/main.jsx`
-3. `frontend/src/App.jsx`
-4. `backend/server.js`
-5. `HUONG_DAN_DU_AN.md`
-6. File nay
+1. state nào điều khiển giao diện
+2. hàm nào xử lý thao tác
+3. API nào được gọi
+4. dữ liệu trả về cập nhật state nào
 
-Cach doc de hieu nhanh:
-
-1. Doc ten state truoc
-2. Doc 2 `useEffect`
-3. Doc `handleAuthSubmit`
-4. Doc `handleEmpSubmit`
-5. Doc `handleEdit`
-6. Doc `handleDelete`
-7. Quay lai xem JSX da goi cac ham do o dau
-
----
-
-## 14. TOM TAT COT LOI
-
-Neu phai tom tat ngan gon nhat thi:
-
-- `main.jsx` khoi dong React
-- `App.jsx` quan ly giao dien va goi API
-- `server.js` nhan request va thao tac database
-- `useEffect` dung de tai du lieu
-- `handleAuthSubmit` dung cho dang nhap/dang ky
-- `handleEmpSubmit` dung cho them/sua nhan vien
-- `handleDelete` dung de xoa
-- `handleEdit` dung de nap du lieu len form
-- `fetchEmployees` dung de tai lai bang sau CRUD
-
----
-
-## 15. GOI Y HOC TIEP
-
-Neu ban muon hieu sau hon nua, buoc tiep theo nen lam la:
-
-1. Tach `App.jsx` thanh nhieu component nho
-2. Tach cac lenh `fetch` ra file `api.js`
-3. Them `try/catch` day du hon cho cac `useEffect`
-4. Them `localStorage` de giu trang thai dang nhap
-5. Them ma hoa mat khau o backend
-
+Đó là cách hiểu đúng luồng chạy của cả hệ thống.
